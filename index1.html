@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hey AHONA This is for you</title>
+
+    <!-- React & ReactDOM -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap");
+
+      :root {
+        --color-gold: #d4af37;
+        --color-deep-blue: #0f172a;
+        --color-purple-mist: rgba(88, 28, 135, 0.3);
+      }
+
+      body {
+        margin: 0;
+        background-color: var(--color-deep-blue);
+        color: #e2e8f0;
+        font-family: "Inter", sans-serif;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      h1,
+      h2,
+      h3,
+      .serif {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+
+      /* Animations */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes pulse-gold {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 15px rgba(212, 175, 55, 0);
+        }
+      }
+      .btn-pulse {
+        animation: pulse-gold 2s infinite;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-in-scroll {
+        opacity: 0;
+        transition: opacity 1s ease-out, transform 1s ease-out;
+        transform: translateY(30px);
+      }
+      .fade-in-scroll.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* 3D Surprise Box Styles */
+      .scene {
+        width: 200px;
+        height: 200px;
+        perspective: 600px;
+        margin: 0 auto;
+      }
+      .cube {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 1s;
+        cursor: pointer;
+      }
+      .cube__face {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border: 2px solid var(--color-gold);
+        line-height: 200px;
+        font-size: 40px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        background: radial-gradient(
+          circle,
+          rgba(30, 41, 59, 0.95) 0%,
+          rgba(15, 23, 42, 0.95) 100%
+        );
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+        backface-visibility: visible;
+        transition: all 0.5s ease;
+      }
+      .cube__face--front {
+        transform: rotateY(0deg) translateZ(100px);
+      }
+      .cube__face--right {
+        transform: rotateY(90deg) translateZ(100px);
+      }
+      .cube__face--back {
+        transform: rotateY(180deg) translateZ(100px);
+      }
+      .cube__face--left {
+        transform: rotateY(-90deg) translateZ(100px);
+      }
+      .cube__face--top {
+        transform: rotateX(90deg) translateZ(100px);
+        transform-origin: center center;
+      }
+      .cube__face--bottom {
+        transform: rotateX(-90deg) translateZ(100px);
+      }
+
+      /* Box Open State */
+      .cube.is-open {
+        transform: rotateX(15deg) rotateY(-15deg);
+      }
+      .cube.is-open .cube__face--top {
+        transform: rotateX(160deg) translateZ(100px);
+        /* Hinge effect needs specific origin logic usually, but simplified here with transform */
+        transform-origin: top center;
+        border-color: #fbbf24;
+        box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+      }
+
+      .light-beam {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 0px;
+        background: white;
+        box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.4);
+        transform: translate(-50%, -50%);
+        transition: height 0.5s ease 0.5s, box-shadow 0.5s ease 0.5s;
+        z-index: -1;
+      }
+      .cube.is-open .light-beam {
+        height: 300px;
+        box-shadow: 0 0 50px 20px rgba(212, 175, 55, 0.6);
+      }
+
+      /* Timeline H-Scroll */
+      .horizontal-scroll-container {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .horizontal-scroll-container::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      // --- Utilities ---
+
+      // Procedural Audio Generator (Ambient Drone)
+      class AudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.oscillators = [];
+          this.gainNodes = [];
+          this.isPlaying = false;
+        }
+
+        init() {
+          if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+        }
+
+        play() {
+          if (this.isPlaying) return;
+          this.init();
+
+          // Create a dreamy chord (Major 7th ish)
+          //   const freqs = [23,45,56,673,196.0,123.32,32.34,43.2, 246.94, 293.66, 392.0, 587.33]; // G3, B3, D4, G4, D5
+
+          const freqs = [
+            174.61, 196.0, 220.0, 246.94, 293.66, 329.63, 392.0, 440.0, 493.88,
+            587.33,
+          ];
+
+          freqs.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = i % 2 === 0 ? "sine" : "triangle";
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+            // Slow LFO for volume movement
+            const lfo = this.ctx.createOscillator();
+            lfo.frequency.value = 0.1 + Math.random() * 0.1;
+            const lfoGain = this.ctx.createGain();
+            lfoGain.gain.value = 0.1; // Depth of modulation
+
+            lfo.connect(lfoGain);
+            lfoGain.connect(gain.gain);
+
+            gain.gain.setValueAtTime(0, this.ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 4); // Fade in
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            lfo.start();
+
+            this.oscillators.push({ osc, lfo });
+            this.gainNodes.push(gain);
+          });
+
+          this.isPlaying = true;
+        }
+
+        stop() {
+          if (!this.isPlaying) return;
+          const now = this.ctx.currentTime;
+          this.gainNodes.forEach((g) => {
+            g.gain.linearRampToValueAtTime(0, now + 2); // Fade out
+          });
+          setTimeout(() => {
+            this.oscillators.forEach((o) => {
+              o.osc.stop();
+              o.lfo.stop();
+            });
+            this.oscillators = [];
+            this.gainNodes = [];
+          }, 2000);
+          this.isPlaying = false;
+        }
+      }
+
+      const audioManager = new AudioEngine();
+
+      // Hook for intersection observer
+      const useOnScreen = (options) => {
+        const ref = React.useRef();
+        const [visible, setVisible] = React.useState(false);
+
+        React.useEffect(() => {
+          const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) setVisible(true);
+          }, options);
+
+          if (ref.current) observer.observe(ref.current);
+          return () => {
+            if (ref.current) observer.unobserve(ref.current);
+          };
+        }, [ref, options]);
+
+        return [ref, visible];
+      };
+
+      // --- Components ---
+
+      const Icons = {
+        Volume2: () => (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        ),
+        VolumeX: () => (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        ),
+        Star: () => (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            stroke="none"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        ),
+        ChevronRight: () => (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        ),
+      };
+
+      // 1. Landing Section with Particles
+      const Landing = ({ onStart }) => {
+        const canvasRef = React.useRef(null);
+
+        React.useEffect(() => {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext("2d");
+          let width = (canvas.width = window.innerWidth);
+          let height = (canvas.height = window.innerHeight);
+          let particles = [];
+
+          class Particle {
+            constructor() {
+              this.x = Math.random() * width;
+              this.y = Math.random() * height;
+              this.size = Math.random() * 2 + 0.1;
+              this.speedX = Math.random() * 0.5 - 0.25;
+              this.speedY = Math.random() * 0.5 - 0.25;
+              this.opacity = Math.random() * 0.5 + 0.1;
+            }
+            update() {
+              this.x += this.speedX;
+              this.y += this.speedY;
+              if (this.size > 0.2) this.size -= 0.01;
+              if (this.size <= 0.2) this.size = Math.random() * 2 + 1;
+
+              if (this.x < 0 || this.x > width) this.speedX *= -1;
+              if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+            draw() {
+              ctx.fillStyle = `rgba(212, 175, 55, ${this.opacity})`;
+              ctx.beginPath();
+              ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+          function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach((p) => {
+              p.update();
+              p.draw();
+            });
+            requestAnimationFrame(animate);
+          }
+          animate();
+
+          const handleResize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+          };
+          window.addEventListener("resize", handleResize);
+          return () => window.removeEventListener("resize", handleResize);
+        }, []);
+
+        return (
+          <div className="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 w-full h-full z-0 opacity-60"
+            />
+
+            <div className="z-10 text-center px-4 max-w-2xl animate-float">
+              <p className="text-amber-200/80 tracking-[0.2em] uppercase text-sm mb-4">
+                A Journey of your Life .
+              </p>
+              <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 mb-6 drop-shadow-lg leading-tight pb-2">
+                HEY AHONA
+                <br />
+                ^_^
+              </h1>
+              <p className="text-slate-300 text-lg md:text-xl font-light mb-12 leading-relaxed">
+                Some days are just dates on a calendar.
+                <br />
+                Others are chapters in a story written just for you.
+              </p>
+
+              <button
+                onClick={onStart}
+                className="group relative px-8 py-4 bg-transparent border border-amber-400/30 text-amber-100 rounded-full transition-all duration-500 hover:bg-amber-900/20 btn-pulse overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Begin the Journey <Icons.ChevronRight />
+                </span>
+                <div className="absolute inset-0 bg-amber-500/10 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+              </button>
+            </div>
+
+            <div className="absolute bottom-10 left-0 w-full text-center z-10 opacity-50 text-xs text-slate-400">
+              Best experienced with sound on
+            </div>
+          </div>
+        );
+      };
+
+      // 2. Narrative / Emotional Text Section
+      const Narrative = () => {
+        const [ref, visible] = useOnScreen({ threshold: 0.3 });
+
+        return (
+          <div
+            ref={ref}
+            className="min-h-[80vh] flex items-center justify-center px-6 py-20 bg-gradient-to-b from-[#0F172A] to-[#1E1B4B]"
+          >
+            <div
+              className={`max-w-3xl text-center transition-all duration-1000 ${
+                visible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
+              }`}
+            >
+              <h2 className="serif text-3xl md:text-5xl text-amber-50 mb-12 leading-snug">
+                "The world moves fast, but today we pause."
+              </h2>
+              <div className="space-y-6 text-lg md:text-2xl text-slate-300 font-light">
+                <p
+                  className={`transition-all duration-1000 delay-300 ${
+                    visible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-8"
+                  }`}
+                >
+                  To celebrate the footprints you've left behind.
+                </p>
+                <p
+                  className={`transition-all duration-1000 delay-700 ${
+                    visible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-8"
+                  }`}
+                >
+                  The smiles you've ignited.
+                </p>
+                <p
+                  className={`transition-all duration-1000 delay-1000 ${
+                    visible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-8"
+                  }`}
+                >
+                  And the light you carry forward.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      //   // 3. Horizontal Memory Timeline
+      //   const Timeline = () => {
+      //     React.useEffect(() => {
+      //       const container = document.querySelector(
+      //         ".horizontal-scroll-container"
+      //       );
+      //       if (!container) return;
+
+      //       const onWheel = (e) => {
+      //         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      //           e.preventDefault();
+      //           container.scrollLeft += e.deltaY;
+      //         }
+      //       };
+
+      //       container.addEventListener("wheel", onWheel, { passive: false });
+      //       return () => container.removeEventListener("wheel", onWheel);
+      //     }, []);
+
+      //     const memories = [
+      //       {
+      //         title: "The Beginning",
+      //         desc: "A spark that started it all.",
+      //         icon: "✨",
+      //       },
+      //       {
+      //         title: "The Adventure",
+      //         desc: "Mountains climbed, fears conquered.",
+      //         icon: "🏔️",
+      //       },
+      //       {
+      //         title: "The Laughter",
+      //         desc: "Moments that made your soul dance.",
+      //         icon: "🎭",
+      //       },
+      //       {
+      //         title: "The Wisdom",
+      //         desc: "Quiet lessons learned in the storm.",
+      //         icon: "🦉",
+      //       },
+      //       {
+      //         title: "The Future",
+      //         desc: "Unwritten pages waiting for your ink.",
+      //         icon: "🖋️",
+      //       },
+      //     ];
+
+      //     return (
+      //       <div className="py-20 bg-[#1E1B4B]">
+      //         <div className="px-6 mb-10 md:px-20">
+      //           <h3 className="text-2xl text-amber-200 serif">Your Timeline</h3>
+      //           <p className="text-slate-400">Scroll to explore the chapters</p>
+      //         </div>
+
+      //         <div className="horizontal-scroll-container flex overflow-x-auto gap-8 px-6 md:px-20 pb-12 snap-x snap-mandatory">
+      //           {memories.map((mem, idx) => (
+      //             <div
+      //               key={idx}
+      //               className="snap-center shrink-0 w-[80vw] md:w-[400px] h-[500px] bg-slate-900/50 border border-white/10 rounded-2xl p-8 flex flex-col justify-end relative overflow-hidden group hover:border-amber-500/30 transition-colors duration-500"
+      //             >
+      //               <div className="absolute top-0 right-0 p-40 bg-amber-500/5 rounded-full blur-3xl transform translate-x-10 -translate-y-10 group-hover:bg-amber-500/10 transition-all duration-700"></div>
+
+      //               <div className="relative z-10">
+      //                 <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
+      //                   {mem.icon}
+      //                 </div>
+      //                 <div className="h-1 w-12 bg-amber-500 mb-6"></div>
+      //                 <h4 className="text-3xl font-bold text-white mb-4 serif">
+      //                   {mem.title}
+      //                 </h4>
+      //                 <p className="text-slate-300 text-lg leading-relaxed">
+      //                   {mem.desc}
+      //                 </p>
+      //               </div>
+      //             </div>
+      //           ))}
+      //           <div className="shrink-0 w-10"></div> {/* Spacer */}
+      //         </div>
+      //       </div>
+      //     );
+      //   };
+
+      /* ================= TIMELINE ================= */
+      const Timeline = () => {
+        const [ref, vis] = useOnScreen({ threshold: 0.3 });
+
+        React.useEffect(() => {
+          const el = document.querySelector(".timeline-scroll");
+          if (!el) return;
+          const wheel = (e) => {
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+          };
+          el.addEventListener("wheel", wheel, { passive: false });
+          return () => el.removeEventListener("wheel", wheel);
+        }, []);
+
+        const items = [
+          { t: "The Spark", d: "Where it all began ✨" },
+          { t: "The Chaos", d: "Laughs louder than fear 🎭" },
+          { t: "The Growth", d: "You becoming you 🌱" },
+          { t: "The Magic", d: "Unforgettable moments 💫" },
+          { t: "The Future", d: "Still unwritten 🖋️" },
+        ];
+
+        return (
+          <section
+            ref={ref}
+            className={`py-20 transition-all duration-1000 ${
+              vis ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div className="text-center mb-10">
+              <h3 className="text-3xl text-amber-200">Your Timeline</h3>
+              <p className="text-slate-400">
+                Scroll to explore the chapters but tor kono photo nai 😂
+              </p>
+              <div className="flex justify-center gap-3 mt-3 text-amber-300 animate-pulse">
+                ← Scroll →
+              </div>
+            </div>
+            <div className="timeline-scroll flex gap-8 overflow-x-auto px-10">
+              {items.map((i, idx) => (
+                <div
+                  key={idx}
+                  className="min-w-[280px] h-[380px] bg-slate-900/60 border border-white/10 rounded-2xl p-6 flex flex-col justify-end hover:border-amber-400/40 transition"
+                >
+                  <h4 className="text-2xl mb-2">{i.t}</h4>
+                  <p className="text-slate-300">{i.d}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      };
+
+
+
+
+
+
+
+
+
+
+      // 4. Surprise Box 3D
+      const SurpriseBox = ({ onOpen }) => {
+        const [isOpen, setIsOpen] = React.useState(false);
+        const [ref, visible] = useOnScreen({ threshold: 0.5 });
+
+        const handleClick = () => {
+          if (!isOpen) {
+            setIsOpen(true);
+            onOpen();
+          }
+        };
+
+        return (
+          <div
+            ref={ref}
+            className="min-h-screen flex flex-col items-center justify-center bg-[#0F172A] relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-800/30 via-[#0F172A] to-[#0F172A]"></div>
+
+            <div
+              className={`transition-opacity duration-1000 mb-12 text-center z-10 ${
+                visible ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <h3 className="text-2xl text-amber-100 mb-2">Ther is nothing 😂 But You can click 😊 </h3>
+              <p className="text-slate-400 text-sm">
+                Tap the box to reveal your message
+              </p>
+            </div>
+
+            <div className="scene">
+              <div
+                className={`cube ${isOpen ? "is-open" : ""}`}
+                onClick={handleClick}
+              >
+                <div className="cube__face cube__face--front flex items-center justify-center text-4xl">
+                  🎁
+                </div>
+                <div className="cube__face cube__face--back"></div>
+                <div className="cube__face cube__face--right"></div>
+                <div className="cube__face cube__face--left"></div>
+                <div className="cube__face cube__face--top flex items-center justify-center text-6xl">
+                  ✨
+                </div>
+                <div className="cube__face cube__face--bottom"></div>
+                <div className="light-beam"></div>
+              </div>
+            </div>
+
+            <div
+              className={`mt-20 max-w-lg text-center px-6 transition-all duration-1000 delay-500 ${
+                isOpen
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
+              }`}
+            >
+              <p className="serif text-3xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-100 leading-normal">
+                "May your year be as bright as the light you bring to others."
+              </p>
+            </div>
+          </div>
+        );
+      };
+
+      // 5. Celebration & Countdown
+      const Celebration = ({ isActive }) => {
+        const [count, setCount] = React.useState(3);
+        const [finished, setFinished] = React.useState(false);
+
+        React.useEffect(() => {
+          if (!isActive) return;
+
+          const timer = setInterval(() => {
+            setCount((prev) => {
+              if (prev === 1) {
+                clearInterval(timer);
+                setFinished(true);
+                triggerConfetti();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(timer);
+        }, [isActive]);
+
+        const triggerConfetti = () => {
+          const duration = 3000;
+          const end = Date.now() + duration;
+
+          const frame = () => {
+            confetti({
+              particleCount: 5,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 },
+              colors: ["#D4AF37", "#FFF", "#C084FC"],
+            });
+            confetti({
+              particleCount: 5,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 },
+              colors: ["#D4AF37", "#FFF", "#C084FC"],
+            });
+
+            if (Date.now() < end) {
+              requestAnimationFrame(frame);
+            }
+          };
+          frame();
+        };
+
+        if (!isActive) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-500">
+            {!finished ? (
+              <div className="text-9xl font-bold text-amber-400 animate-pulse font-mono">
+                {count}
+              </div>
+            ) : (
+              <div className="text-center animate-float px-4">
+                <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 serif drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]">
+                  Happy Birthday!
+                </h1>
+                <p className="text-2xl text-amber-200 font-light">
+                  Here's to you.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-12 px-6 py-2 border border-white/20 rounded-full text-sm text-slate-400 hover:bg-white/10 transition"
+                >
+                  Enjoy your life !
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // --- Main App ---
+      const App = () => {
+        const [started, setStarted] = React.useState(false);
+        const [audioOn, setAudioOn] = React.useState(false);
+        const [celebrating, setCelebrating] = React.useState(false);
+
+        const handleStart = () => {
+          setStarted(true);
+          audioManager.play();
+          setAudioOn(true);
+
+          // Smooth scroll to next section
+          setTimeout(() => {
+            const el = document.getElementById("narrative-start");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        };
+
+        const toggleAudio = () => {
+          if (audioOn) {
+            audioManager.stop();
+            setAudioOn(false);
+          } else {
+            audioManager.play();
+            setAudioOn(true);
+          }
+        };
+
+        const handleBoxOpen = () => {
+          setTimeout(() => {
+            setCelebrating(true);
+          }, 4000); // Wait for box open animation and reading time
+        };
+
+        return (
+          <div className="bg-[#0F172A] text-slate-200 min-h-screen">
+            {/* Floating Controls */}
+            <div className="fixed top-6 right-6 z-50 mix-blend-difference">
+              <button
+                onClick={toggleAudio}
+                className="p-3 rounded-full border border-white/20 bg-black/20 backdrop-blur-md hover:bg-white/10 transition-colors"
+              >
+                {audioOn ? <Icons.Volume2 /> : <Icons.VolumeX />}
+              </button>
+            </div>
+
+            {!started ? (
+              <Landing onStart={handleStart} />
+            ) : (
+              <div className="animate-in fade-in duration-1000">
+                {/* Re-render Landing as background hero but without interaction logic if needed, 
+                                but simpler to just scroll past it. We'll keep it mounted. */}
+                <Landing onStart={() => {}} />
+
+                <div
+                  id="narrative-start"
+                  className="relative z-10 bg-[#0F172A] shadow-[0_-50px_100px_#0F172A]"
+                >
+                  <Narrative />
+                  <Timeline />
+                  <SurpriseBox onOpen={handleBoxOpen} />
+                </div>
+
+                <div className="py-20 bg-[#0F172A] text-center text-slate-600 text-sm">
+                  <p>Designed with ❤️</p>
+                </div>
+              </div>
+            )}
+
+            <Celebration isActive={celebrating} />
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
